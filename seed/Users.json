@@ -1,0 +1,37 @@
+[
+    {
+        "userId": "u01",
+        "name": "Armstrong Ross",
+        "companyId": "c01"
+    },
+    {
+        "userId": "u02",
+        "name": "Hope Shaffer",
+        "companyId": "c01"
+    },
+    {
+        "userId": "u03",
+        "name": "Ware Cash",
+        "companyId": "c02"
+    },
+    {
+        "userId": "u04",
+        "name": "Kelsey Rhodes",
+        "companyId": "c02"
+    },
+    {
+        "userId": "u05",
+        "name": "Alyson Hendricks",
+        "companyId": "c03"
+    },
+    {
+        "userId": "u06",
+        "name": "Burt Shields",
+        "companyId": "c03"
+    },
+    {
+        "userId": "u07",
+        "name": "Ruth Burton",
+        "companyId": "c03"
+    }
+]
