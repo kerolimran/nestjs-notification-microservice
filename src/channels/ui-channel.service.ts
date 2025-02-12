@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { INotificationChannel } from './notification-channel.interface';
 import { Notification, NotificationDocument } from '../schemas/notification.schema';
-import { NotificationType } from 'src/interfaces/notification.interface';
+import { NotificationType } from '../interfaces/notification.interface';
 
 @Injectable()
 export class UIChannelService implements INotificationChannel {
@@ -12,26 +12,28 @@ export class UIChannelService implements INotificationChannel {
         private notificationModel: Model<NotificationDocument>,
     ) { }
 
+
     /**
-     * Sends a notification through the UI channel.
-     *
+     * Sends a notification through the UI channel based on the notification type.
+     * 
      * @param notification - The notification object to be sent
-     * @param notification.type - The type of notification (LEAVE_BALANCE_REMINDER, HAPPY_BIRTHDAY)
-     * @param notification.userId - The user ID the notification is for
-     * @param notification.message - The message content (will be overwritten based on type)
-     * @throws Error when an unsupported notification type is provided
-     * @returns Promise<void>
+     * @param notification.type - The type of notification (LEAVE_BALANCE_REMINDER or HAPPY_BIRTHDAY)
+     * @param notification.user - Optional user object containing recipient details
+     * @param notification.user.name - Name of the recipient
+     * @param notification.userId - Fallback user identifier if user object is not provided
+     * @throws {Error} When an unsupported notification type is provided
+     * @returns Promise that resolves when notification is sent successfully 
      */
     async send(notification: any): Promise<void> {
         switch (notification.type) {
             case NotificationType.LEAVE_BALANCE_REMINDER:
                 // Send UI notification for leave balance reminder
-                notification.message = `Leave balance reminder for ${notification.userId}`;
+                notification.message = `Leave balance reminder for ${notification?.user.name || notification.userId}`;
                 await this.notificationModel.create(notification);
                 break;
             case NotificationType.HAPPY_BIRTHDAY:
                 // Send UI notification for birthday greeting
-                notification.message = `Happy Birthday! ${notification.userId}`;
+                notification.message = `Happy Birthday! ${notification?.user.name || notification.userId}`;
                 await this.notificationModel.create(notification);
                 break;
             default:

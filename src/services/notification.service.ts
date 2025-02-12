@@ -21,15 +21,15 @@ export class NotificationService {
     ) { }
 
     /**
-     * Sends a notification to the user through the appropriate channels.
+     * Sends a notification to a user based on their subscription preferences.
      *
-     * @param {INotification} notification - The notification object containing the details of the notification.
-     * @returns {Promise<void>} A promise that resolves when the notification has been sent.
-     * @throws {Error} If the user is not subscribed to the notification channel.
-     * @throws {Error} If the notification type is not supported.
+     * @param notification - The notification object to be sent.
+     * @returns A promise that resolves when the notification has been sent successfully.
      */
     async sendNotification(notification: INotification): Promise<void> {
         const channels = this.notificationChannels.get(notification.type);
+
+        const notificationWithUser = await this.getNotificationWithUser(notification);
 
         if (!channels) {
             throw new Error(`Notification type ${notification.type} not supported`);
@@ -44,9 +44,9 @@ export class NotificationService {
 
             if (isSubscribed) {
                 const channel = this.channelFactory.getChannel(channelType);
-                await channel.send(notification);
+                await channel.send(notificationWithUser);
             } else {
-                console.log(`User ${notification.userId} is not subscribed to ${channelType} channel`);
+                console.log(`User ${notificationWithUser?.user.name || notification.userId} is not subscribed to ${channelType} channel`);
                 continue;
             }
         }
@@ -63,6 +63,36 @@ export class NotificationService {
             .find({ userId })
             .sort({ createdAt: -1 })
             .exec();
+    }
+
+    /**
+     * Retrieves notifications with associated user information using MongoDB aggregation.
+     * 
+     * @param notification - The notification object containing user ID for filtering
+     * @returns Promise that resolves to notifications with populated user data
+     * 
+     * @example
+     * ```typescript
+     * const notification = { userId: '123' };
+     * const result = await getNotificationWithUser(notification);
+     * // Returns notifications with user details for userId: '123'
+     * ```
+     */
+    async getNotificationWithUser(notification: INotification): Promise<any> {
+        const notificationUser = this.notificationModel.aggregate([
+            { $match: { userId: notification.userId } },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'userId',
+                    foreignField: 'userId',
+                    as: 'user'
+                }
+            },
+            { $unwind: '$user' }
+        ]).exec();
+
+        return notificationUser;
     }
 }
 
