@@ -7,9 +7,7 @@ export class SubscriptionController {
     constructor(private readonly subscriptionService: SubscriptionService) { }
 
     @Post()
-    async subscribe(
-        @Body() data: { userId: string; companyId: string; channelType: ChannelType },
-    ) {
+    async subscribe(@Body() data: { userId: string; companyId: string; channelType: ChannelType }) {
         const subscription = await this.subscriptionService.subscribe(
             data.userId,
             data.companyId,
@@ -19,11 +17,7 @@ export class SubscriptionController {
     }
 
     @Delete(':userId/:companyId/:channelType')
-    async unsubscribe(
-        @Param('userId') userId: string,
-        @Param('companyId') companyId: string,
-        @Param('channelType') channelType: ChannelType,
-    ) {
+    async unsubscribe(@Param('userId') userId: string, @Param('companyId') companyId: string, @Param('channelType') channelType: ChannelType) {
         await this.subscriptionService.unsubscribe(userId, companyId, channelType);
         return { message: 'Unsubscribed successfully' };
     }

@@ -6,11 +6,14 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Notification } from '../schemas/notification.schema';
 import { Model } from 'mongoose';
 import { INotification, NotificationType } from '../interfaces/notification.interface';
+import { NotificationRepository } from '../repositories/notification.repository';
+import { User } from '../schemas/user.schema';
 
 describe('NotificationService', () => {
     let service: NotificationService;
     let channelFactory: ChannelFactory;
     let subscriptionService: SubscriptionService;
+    let notificationRepository: NotificationRepository;
     let notificationModel: Model<Notification>;
 
     const mockChannel = {
@@ -32,6 +35,22 @@ describe('NotificationService', () => {
         aggregate: jest.fn().mockReturnThis(),
     };
 
+    const mockNotificationRepository = {
+        create: jest.fn(),
+        findAll: jest.fn(),
+        findOne: jest.fn(),
+        findByUserId: jest.fn(),
+    };
+
+    const mockNotificationService = {
+        getUserName: jest.fn()
+    };
+
+    const mockUserModel = {
+        findById: jest.fn().mockReturnThis(),
+        exec: jest.fn()
+    };
+
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
@@ -48,6 +67,14 @@ describe('NotificationService', () => {
                     provide: getModelToken(Notification.name),
                     useValue: mockNotificationModel,
                 },
+                {
+                    provide: NotificationRepository,
+                    useValue: mockNotificationRepository,
+                },
+                {
+                    provide: getModelToken(User.name),
+                    useValue: mockUserModel,
+                }
             ],
         }).compile();
 
@@ -57,6 +84,9 @@ describe('NotificationService', () => {
         notificationModel = module.get<Model<Notification>>(
             getModelToken(Notification.name),
         );
+
+        // Mock getUserName method
+        jest.spyOn(service, 'getUserName').mockImplementation(mockNotificationService.getUserName);
     });
 
     it('should be defined', () => {
@@ -64,22 +94,71 @@ describe('NotificationService', () => {
     });
 
     describe('sendNotification', () => {
+        let consoleSpy: jest.SpyInstance;
+
+        beforeEach(() => {
+            consoleSpy = jest.spyOn(console, 'log');
+            mockNotificationService.getUserName.mockReset();
+            mockUserModel.findById.mockClear();
+            mockUserModel.exec.mockClear();
+        });
+
+        afterEach(() => {
+            consoleSpy.mockRestore();
+        });
+
         const mockNotification: INotification = {
             type: NotificationType.HAPPY_BIRTHDAY,
-            userId: 'user123',
-            companyId: 'company123',
+            userId: 'u01',
+            companyId: 'c01',
+            message: '',
+            user: {
+                userId: 'u01',
+                name: '',
+                companyId: 'c01',
+            },
         };
 
         it('should send notification through subscribed channels', async () => {
-            mockSubscriptionService.isSubscribed.mockResolvedValue(true);
             mockChannelFactory.getChannel.mockReturnValue(mockChannel);
             mockChannel.send.mockResolvedValue(undefined);
+            mockNotificationService.getUserName.mockResolvedValue('Armstrong Ross');
+            mockSubscriptionService.isSubscribed.mockResolvedValue(true);
+            mockUserModel.exec.mockResolvedValue({ name: 'Armstrong Ross' });
 
-            await service.sendNotification(mockNotification);
+            const test = await service.sendNotification(mockNotification);
 
+            expect(mockNotificationService.getUserName).toHaveBeenCalledWith({ "companyId": "c01", "message": "", "type": "happy-birthday", "user": { "companyId": "c01", "name": "Armstrong Ross", "userId": "u01" }, "userId": "u01" });
             expect(mockSubscriptionService.isSubscribed).toHaveBeenCalledTimes(2);
             expect(mockChannelFactory.getChannel).toHaveBeenCalledTimes(2);
             expect(mockChannel.send).toHaveBeenCalledTimes(2);
+
+        });
+
+        it('should handle case when user is not found', async () => {
+
+            const mockNotification2: INotification = {
+                type: NotificationType.HAPPY_BIRTHDAY,
+                userId: 'u11',
+                companyId: 'c01',
+                message: '',
+                user: {
+                    userId: 'u11',
+                    name: '',
+                    companyId: 'c01',
+                },
+            };
+
+            mockChannelFactory.getChannel.mockReturnValue(mockChannel);
+            // mockSubscriptionService.isSubscribed.mockResolvedValue(false);
+            mockNotificationService.getUserName.mockRejectedValue(new Error('User not found'));
+            mockUserModel.exec.mockResolvedValue(null);
+
+            await expect(service.sendNotification(mockNotification2))
+                .rejects
+                .toThrow('User not found');
+
+            expect(mockNotificationService.getUserName).toHaveBeenCalledWith(mockNotification2);
         });
 
         it('should throw error for unsupported notification type', async () => {
@@ -107,14 +186,11 @@ describe('NotificationService', () => {
             const userId = 'user123';
             const mockNotifications = [{ userId, content: 'test' }];
 
-            mockNotificationModel.find.mockReturnThis();
-            mockNotificationModel.sort.mockReturnThis();
-            mockNotificationModel.exec.mockResolvedValue(mockNotifications);
+            mockNotificationRepository.findByUserId.mockResolvedValue(mockNotifications);
 
             const result = await service.getUserNotifications(userId);
 
-            expect(mockNotificationModel.find).toHaveBeenCalledWith({ userId });
-            expect(mockNotificationModel.sort).toHaveBeenCalledWith({ createdAt: -1 });
+            expect(mockNotificationRepository.findByUserId).toHaveBeenCalledWith(userId);
             expect(result).toEqual(mockNotifications);
         });
     });

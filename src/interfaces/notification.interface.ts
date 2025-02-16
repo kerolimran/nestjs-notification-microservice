@@ -1,3 +1,5 @@
+import { IUser } from "./user.interface";
+
 export enum NotificationType {
     LEAVE_BALANCE_REMINDER = 'leave-balance-reminder',
     MONTHLY_PAYSLIP = 'monthly-payslip',
@@ -14,6 +16,8 @@ export interface INotification {
     userId: string;
     type: NotificationType;
     createdAt?: Date;
+    message: string;
+    user: IUser
 }
 
 

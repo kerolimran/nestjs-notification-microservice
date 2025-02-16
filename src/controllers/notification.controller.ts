@@ -7,11 +7,17 @@ export class NotificationController {
     constructor(private readonly notificationService: NotificationService) { }
 
     @Post()
-    async sendNotification(@Param('userId') userId: string, @Param('companyId') companyId: string, @Param('notificationType') notificationType: NotificationType) {
+    async sendNotification(@Body() data: { userId: string; companyId: string; notificationType: NotificationType }) {
         const notification = {
-            userId: userId,
-            companyId: companyId,
-            type: notificationType,
+            userId: data.userId,
+            companyId: data.companyId,
+            type: data.notificationType,
+            message: '',
+            user: {
+                userId: data.userId,
+                name: '',
+                companyId: data.companyId,
+            },
         }
         await this.notificationService.sendNotification(notification);
         return { message: 'Notification sent successfully' };

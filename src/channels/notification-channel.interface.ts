@@ -1,3 +1,5 @@
+import { INotification } from "../interfaces/notification.interface";
+
 /**
  * Interface for implementing notification channels
  * 
@@ -9,5 +11,5 @@
  * @throws May throw an error if sending fails
  */
 export interface INotificationChannel {
-    send(notification: any): Promise<void>;
+    send(notification: INotification): Promise<void>;
 }

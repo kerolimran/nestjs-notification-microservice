@@ -8,8 +8,10 @@ import { ChannelFactory } from './factories/channel.factory';
 import { Notification, NotificationSchema } from './schemas/notification.schema';
 import { SubscriptionService } from './services/subscription.service';
 import { Subscription, SubscriptionSchema } from './schemas/subscription.schema';
+import { NotificationRepository } from './repositories/notification.repository';
+import { SubscriptionController } from './controllers/subscription.controller';
 import { User, UserSchema } from './schemas/user.schema';
-import { Company, CompanySchema } from './schemas/company.schema';
+
 
 @Module({
   imports: [
@@ -18,16 +20,16 @@ import { Company, CompanySchema } from './schemas/company.schema';
       { name: Notification.name, schema: NotificationSchema },
       { name: Subscription.name, schema: SubscriptionSchema },
       { name: User.name, schema: UserSchema },
-      { name: Company.name, schema: CompanySchema },
     ]),
   ],
-  controllers: [NotificationController],
+  controllers: [NotificationController, SubscriptionController],
   providers: [
     NotificationService,
     SubscriptionService,
     EmailChannelService,
     UIChannelService,
     ChannelFactory,
+    NotificationRepository
   ],
 })
 export class AppModule { }

@@ -11,11 +11,7 @@ export class SubscriptionService {
         private subscriptionModel: Model<SubscriptionDocument>,
     ) { }
 
-    async isSubscribed(
-        userId: string,
-        companyId: string,
-        channelType: ChannelType,
-    ): Promise<boolean> {
+    async isSubscribed(userId: string, companyId: string, channelType: ChannelType): Promise<boolean> {
         const subscription = await this.subscriptionModel.findOne({
             userId,
             companyId,
@@ -25,11 +21,7 @@ export class SubscriptionService {
         return !!subscription;
     }
 
-    async subscribe(
-        userId: string,
-        companyId: string,
-        channelType: ChannelType,
-    ): Promise<Subscription> {
+    async subscribe(userId: string, companyId: string, channelType: ChannelType): Promise<Subscription> {
         const subscription = await this.subscriptionModel.findOne({
             userId,
             companyId,
@@ -49,11 +41,7 @@ export class SubscriptionService {
         });
     }
 
-    async unsubscribe(
-        userId: string,
-        companyId: string,
-        channelType: ChannelType,
-    ): Promise<Subscription | null> {
+    async unsubscribe(userId: string, companyId: string, channelType: ChannelType): Promise<Subscription | null> {
         const subscription = await this.subscriptionModel.findOne({
             userId,
             companyId,
